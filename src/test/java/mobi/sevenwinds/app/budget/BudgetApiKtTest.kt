@@ -46,7 +46,7 @@ class BudgetApiKtTest : ServerTest() {
             println("${response.author}")
             Assert.assertEquals(100, response.author?.id)
             Assert.assertEquals("Авторов Автор Авторович", response.author?.fio)
-            Assert.assertEquals("2024-05-01-11:11", response.author?.createdAt)
+            Assert.assertEquals("2024-05-01T11:11:00", response.author?.createdAt)
         }
     }
     @Test
