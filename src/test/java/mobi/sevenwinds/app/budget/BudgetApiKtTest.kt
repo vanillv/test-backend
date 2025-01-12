@@ -38,7 +38,17 @@ class BudgetApiKtTest : ServerTest() {
                 Assert.assertEquals(105, response.totalByType[BudgetType.Приход.name])
             }
     }
-
+    @Test
+    fun testBudgetAddingAuthor() {
+        addRecord(BudgetRecord(2024,5, 10, BudgetType.Приход, author =
+        AuthorResponse(100, "Авторов Автор Авторович", "2024-05-01-11:11")))
+        RestAssured.given().post("/budget/add").toResponse<BudgetRecord>().let { response ->
+            println("${response.author}")
+            Assert.assertEquals(100, response.author?.id)
+            Assert.assertEquals("Авторов Автор Авторович", response.author?.fio)
+            Assert.assertEquals("2024-05-01-11:11", response.author?.createdAt)
+        }
+    }
     @Test
     fun testStatsSortOrder() {
         addRecord(BudgetRecord(2020, 5, 100, BudgetType.Приход))
@@ -46,9 +56,6 @@ class BudgetApiKtTest : ServerTest() {
         addRecord(BudgetRecord(2020, 5, 50, BudgetType.Приход))
         addRecord(BudgetRecord(2020, 1, 30, BudgetType.Приход))
         addRecord(BudgetRecord(2020, 5, 400, BudgetType.Приход))
-
-        // expected sort order - month ascending, amount descending
-
         RestAssured.given()
             .get("/budget/year/2020/stats?limit=100&offset=0")
             .toResponse<BudgetYearStatsResponse>().let { response ->
