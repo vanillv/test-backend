@@ -1,11 +1,13 @@
 package mobi.sevenwinds.app.budget
 
 import io.restassured.RestAssured
+import mobi.sevenwinds.app.author.AuthorEntity
 import mobi.sevenwinds.common.ServerTest
 import mobi.sevenwinds.common.jsonBody
 import mobi.sevenwinds.common.toResponse
 import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.joda.time.DateTime
 import org.junit.Assert
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -40,15 +42,30 @@ class BudgetApiKtTest : ServerTest() {
     }
     @Test
     fun testBudgetAddingAuthor() {
-        addRecord(BudgetRecord(2024,5, 10, BudgetType.Приход, author =
-        AuthorResponse(100, "Авторов Автор Авторович", "2024-05-01-11:11")))
-        RestAssured.given().post("/budget/add").toResponse<BudgetRecord>().let { response ->
-            println("${response.author}")
-            Assert.assertEquals(100, response.author?.id)
-            Assert.assertEquals("Авторов Автор Авторович", response.author?.fio)
-            Assert.assertEquals("2024-05-01T11:11:00", response.author?.createdAt)
+        transaction {
+            AuthorEntity.new(100) {
+                fio = "Авторов Автор Авторович"
+                createdAt = DateTime.parse("2024-05-01T11:11:00")
+            }
         }
+        val budgetRecord = BudgetRecord(
+            year = 2024,
+            month = 5,
+            amount = 10,
+            type = BudgetType.Приход,
+            author = AuthorResponse(100, "Авторов Автор Авторович", "2024-05-01T11:11:00")
+        )
+        val response = RestAssured.given()
+            .contentType("application/json")
+            .body(budgetRecord)
+            .post("/budget/add")
+            .toResponse<BudgetRecord>()
+        println("${response.author}")
+        Assert.assertEquals(100, response.author?.id)
+        Assert.assertEquals("Авторов Автор Авторович", response.author?.fio)
+        Assert.assertEquals("2024-05-01T11:11:00", response.author?.createdAt)
     }
+
     @Test
     fun testStatsSortOrder() {
         addRecord(BudgetRecord(2020, 5, 100, BudgetType.Приход))
